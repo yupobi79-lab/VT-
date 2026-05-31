@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VT</title>
+  <link href="https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    :root{
+      --red:#ff4655;--bg:#0f1923;--bg2:#1a2634;--bg3:#243447;
+      --text:#ece8e1;--muted:#768079;--border:rgba(255,70,85,0.18);
+      --green:#4ade80;--yellow:#f59e0b;--blue:#38bdf8;
+    }
+    body{background:var(--bg);color:var(--text);font-family:'Noto Sans KR',sans-serif;min-height:100vh;}
+    body::before{
+      content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+      background-image:
+        repeating-linear-gradient(0deg,transparent,transparent 60px,rgba(255,70,85,0.022) 60px,rgba(255,70,85,0.022) 61px),
+        repeating-linear-gradient(90deg,transparent,transparent 60px,rgba(255,70,85,0.022) 60px,rgba(255,70,85,0.022) 61px);
+    }
+
+    /* ── 상단 네비 ── */
+    .topbar{
+      position:sticky;top:0;z-index:50;
+      background:rgba(15,25,35,0.95);backdrop-filter:blur(12px);
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:0;height:58px;padding:0 32px;
+    }
+    .logo{font-family:'Rajdhani',sans-serif;font-size:26px;font-weight:700;letter-spacing:4px;margin-right:40px;}
+    .logo span{color:var(--red);}
+    .nav-tabs{display:flex;gap:4px;flex:1;}
+    .nav-tab{
+      background:none;border:none;color:var(--muted);cursor:pointer;
+      font-family:'Noto Sans KR',sans-serif;font-size:13px;font-weight:500;
+      padding:8px 18px;border-radius:3px;transition:all 0.2s;letter-spacing:0.5px;
+      white-space:nowrap;
+    }
+    .nav-tab:hover{color:var(--text);background:var(--bg2);}
+    .nav-tab.active{color:var(--text);background:var(--bg2);border-bottom:2px solid var(--red);}
+
+    /* ── 공통 ── */
+    .page{display:none;position:relative;z-index:1;padding:32px;max-width:1200px;margin:0 auto;}
+    .page.active{display:block;}
+    .section-title{
+      font-family:'Rajdhani',sans-serif;font-size:13px;font-weight:700;
+      letter-spacing:3px;color:var(--muted);text-transform:uppercase;
+      margin-bottom:18px;display:flex;align-items:center;gap:10px;
+    }
+    .section-title::after{content:'';flex:1;height:1px;background:var(--border);}
+
+    /* ── 각독각폭 페이지 ── */
+    .map-select-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:28px;}
+    .map-chip{
+      background:var(--bg2);border:1px solid var(--border);border-radius:3px;
+      color:var(--muted);cursor:pointer;font-size:12px;letter-spacing:1px;
+      padding:7px 16px;transition:all 0.2s;white-space:nowrap;
+    }
+    .map-chip:hover{border-color:var(--red);color:var(--text);}
+    .map-chip.active{background:var(--red);border-color:var(--red);color:#fff;font-weight:700;}
+
+    .lineup-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    .lineup-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+      overflow:hidden;
+    }
+    .lineup-card-header{
+      padding:14px 20px;display:flex;align-items:center;gap:12px;
+      border-bottom:1px solid var(--border);
+    }
+    .agent-icon{
+      width:36px;height:36px;border-radius:50%;
+      background:var(--bg3);display:flex;align-items:center;justify-content:center;
+      font-size:18px;flex-shrink:0;
+    }
+    .lineup-card-header h3{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:2px;}
+    .lineup-card-header span{font-size:11px;color:var(--muted);letter-spacing:1px;}
+    .lineup-body{padding:16px 20px;display:flex;flex-direction:column;gap:10px;}
+
+    .lineup-item{
+      background:var(--bg3);border-radius:4px;padding:12px 16px;
+      border-left:3px solid var(--red);
+    }
+    .lineup-item-title{font-size:12px;font-weight:700;letter-spacing:1px;margin-bottom:4px;color:var(--text);}
+    .lineup-item-desc{font-size:11px;color:var(--muted);line-height:1.7;}
+    .lineup-item-tip{
+      display:inline-block;margin-top:6px;
+      background:rgba(255,70,85,0.12);color:var(--red);
+      font-size:10px;letter-spacing:1px;padding:2px 8px;border-radius:2px;
+    }
+
+    .map-img-wrap{
+      width:100%;height:200px;overflow:hidden;
+      border-bottom:1px solid var(--border);position:relative;
+    }
+    .map-img-wrap img{width:100%;height:100%;object-fit:cover;filter:brightness(0.6);}
+    .map-img-wrap .map-name-overlay{
+      position:absolute;bottom:12px;left:16px;
+      font-family:'Rajdhani',sans-serif;font-size:28px;font-weight:700;
+      letter-spacing:4px;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,0.8);
+    }
+
+    /* ── 추천 조합 페이지 ── */
+    .comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+    .comp-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+      overflow:hidden;transition:border-color 0.2s;
+    }
+    .comp-card:hover{border-color:rgba(255,70,85,0.4);}
+    .comp-map-header{
+      height:100px;position:relative;overflow:hidden;
+    }
+    .comp-map-header img{width:100%;height:100%;object-fit:cover;filter:brightness(0.5);}
+    .comp-map-header .comp-map-name{
+      position:absolute;bottom:10px;left:14px;
+      font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;letter-spacing:3px;
+    }
+    .comp-body{padding:16px;}
+    .comp-agents{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+    .agent-badge{
+      display:flex;align-items:center;gap:5px;
+      background:var(--bg3);border-radius:3px;padding:5px 10px;
+      font-size:12px;font-weight:500;
+    }
+    .agent-badge .role{font-size:9px;color:var(--muted);letter-spacing:1px;}
+    .comp-tip{font-size:11px;color:var(--muted);line-height:1.6;}
+    .role-tag{
+      font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:2px;
+      text-transform:uppercase;
+    }
+    .role-tag.duelist{background:rgba(255,70,85,0.15);color:var(--red);}
+    .role-tag.controller{background:rgba(56,189,248,0.15);color:var(--blue);}
+    .role-tag.initiator{background:rgba(245,158,11,0.15);color:var(--yellow);}
+    .role-tag.sentinel{background:rgba(74,222,128,0.15);color:var(--green);}
+
+    /* ── 경쟁전 맵 페이지 ── */
+    .ranked-maps-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;}
+    .ranked-map-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+      overflow:hidden;transition:border-color 0.2s,transform 0.2s;cursor:default;
+    }
+    .ranked-map-card:hover{border-color:rgba(255,70,85,0.5);transform:translateY(-2px);}
+    .ranked-map-img{height:130px;position:relative;overflow:hidden;}
+    .ranked-map-img img{width:100%;height:100%;object-fit:cover;filter:brightness(0.55);transition:filter 0.3s;}
+    .ranked-map-card:hover .ranked-map-img img{filter:brightness(0.7);}
+    .ranked-map-img .rmap-name{
+      position:absolute;bottom:10px;left:12px;
+      font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;letter-spacing:3px;
+    }
+    .ranked-map-img .rmap-location{
+      position:absolute;top:8px;right:10px;
+      font-size:9px;letter-spacing:2px;color:rgba(255,255,255,0.6);text-transform:uppercase;
+    }
+    .ranked-map-body{padding:12px 14px;}
+    .ranked-map-body .rmap-desc{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:8px;}
+    .rmap-tags{display:flex;gap:4px;flex-wrap:wrap;}
+    .rmap-tag{
+      font-size:9px;letter-spacing:1px;padding:2px 7px;border-radius:2px;
+      background:var(--bg3);color:var(--muted);text-transform:uppercase;
+    }
+
+    /* ── 데일리 갤러리 ── */
+    .daily-top{display:flex;gap:16px;margin-bottom:28px;}
+    .daily-add-card{
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+      padding:24px;flex:1;max-width:380px;
+    }
+    .daily-add-card h3{font-family:'Rajdhani',sans-serif;font-size:16px;font-weight:700;letter-spacing:2px;margin-bottom:18px;}
+    .form-row{display:flex;flex-direction:column;gap:10px;margin-bottom:14px;}
+    .form-label{font-size:10px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+    .form-input{
+      background:var(--bg3);border:1px solid rgba(255,255,255,0.07);border-radius:2px;
+      color:var(--text);font-family:'Noto Sans KR',sans-serif;font-size:13px;
+      padding:9px 12px;outline:none;transition:border-color 0.2s;width:100%;
+    }
+    .form-input:focus{border-color:var(--red);}
+    .form-row-inline{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .result-btns{display:flex;gap:8px;margin-bottom:14px;}
+    .result-btn{
+      flex:1;background:var(--bg3);border:1px solid rgba(255,255,255,0.07);
+      border-radius:2px;color:var(--muted);cursor:pointer;
+      font-family:'Noto Sans KR',sans-serif;font-size:12px;
+      padding:9px;transition:all 0.2s;
+    }
+    .result-btn:hover{border-color:var(--muted);}
+    .result-btn.sel-win{background:rgba(74,222,128,0.15);border-color:var(--green);color:var(--green);font-weight:700;}
+    .result-btn.sel-lose{background:rgba(255,70,85,0.15);border-color:var(--red);color:var(--red);font-weight:700;}
+    .result-btn.sel-draw{background:rgba(118,128,121,0.2);border-color:var(--muted);color:var(--text);font-weight:700;}
+    .add-btn{
+      width:100%;background:var(--red);border:none;border-radius:2px;
+      color:#fff;cursor:pointer;font-family:'Rajdhani',sans-serif;
+      font-size:14px;font-weight:700;letter-spacing:2px;padding:11px;
+      text-transform:uppercase;transition:background 0.2s;
+    }
+    .add-btn:hover{background:#e03a47;}
+
+    /* 요약 */
+    .daily-summary{
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+      padding:20px 24px;flex:1;display:grid;grid-template-columns:repeat(2,1fr);gap:12px;align-content:start;
+    }
+    .sum-item{background:var(--bg3);border-radius:3px;padding:12px 14px;}
+    .sum-label{font-size:9px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:6px;}
+    .sum-val{font-family:'Rajdhani',sans-serif;font-size:24px;font-weight:700;}
+
+    /* 기록 목록 */
+    .daily-list{display:flex;flex-direction:column;gap:8px;}
+    .daily-entry{
+      background:var(--bg2);border:1px solid var(--border);border-radius:4px;
+      padding:14px 18px;display:grid;
+      grid-template-columns:auto 1fr auto auto auto;
+      align-items:center;gap:20px;
+      transition:border-color 0.2s;
+    }
+    .daily-entry:hover{border-color:rgba(255,70,85,0.3);}
+    .entry-bar{width:4px;height:36px;border-radius:2px;}
+    .entry-bar.win{background:var(--green);}
+    .entry-bar.lose{background:var(--red);}
+    .entry-bar.draw{background:var(--muted);}
+    .entry-date{font-size:12px;color:var(--muted);letter-spacing:0.5px;}
+    .entry-result{font-family:'Rajdhani',sans-serif;font-size:14px;font-weight:700;letter-spacing:1px;}
+    .entry-result.win{color:var(--green);}
+    .entry-result.lose{color:var(--red);}
+    .entry-result.draw{color:var(--muted);}
+    .entry-rr{font-family:'Rajdhani',sans-serif;font-size:18px;font-weight:700;}
+    .entry-rr.up{color:var(--green);}
+    .entry-rr.down{color:var(--red);}
+    .entry-note{font-size:12px;color:var(--muted);max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .entry-del{
+      background:none;border:none;color:var(--muted);cursor:pointer;
+      font-size:14px;padding:4px 8px;border-radius:2px;transition:all 0.2s;
+    }
+    .entry-del:hover{background:rgba(255,70,85,0.1);color:var(--red);}
+    .empty-state{text-align:center;color:var(--muted);font-size:13px;padding:40px;letter-spacing:1px;}
+
+    /* 차트 */
+    .chart-wrap{
+      background:var(--bg2);border:1px solid var(--border);border-radius:6px;
+      padding:20px 24px;margin-bottom:24px;
+    }
+    .chart-title{font-size:11px;letter-spacing:2px;color:var(--muted);text-transform:uppercase;margin-bottom:16px;}
+    canvas{width:100%!important;height:120px!important;}
+
+    @media(max-width:900px){
+      .lineup-grid,.comp-grid,.ranked-maps-grid{grid-template-columns:1fr;}
+      .daily-top{flex-direction:column;}
+      .topbar{padding:0 16px;}
+      .page{padding:20px 16px;}
+    }
+  </style>
+</head>
+<body>
+
+<!-- 상단 네비 -->
+<div class="topbar">
+  <div class="logo">V<span>T</span></div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('lineup')">각독 · 각폭</button>
+    <button class="nav-tab" onclick="showPage('comp')">추천 조합</button>
+    <button class="nav-tab" onclick="showPage('ranked')">경쟁전 맵</button>
+    <button class="nav-tab" onclick="showPage('daily')">데일리 갤러리</button>
+  </div>
+</div>
+
+<!-- ══════════════════════════════
+     1. 각독 · 각폭
+══════════════════════════════ -->
+<div class="page active" id="page-lineup">
+
+  <div class="map-select-row" id="lineup-map-chips"></div>
+
+  <div id="lineup-content"></div>
+
+</div>
+
+<!-- ══════════════════════════════
+     2. 추천 조합
+══════════════════════════════ -->
+<div class="page" id="page-comp">
+  <div class="section-title">맵별 추천 요원 조합</div>
+  <div class="comp-grid" id="comp-grid"></div>
+</div>
+
+<!-- ══════════════════════════════
+     3. 경쟁전 맵
+══════════════════════════════ -->
+<div class="page" id="page-ranked">
+  <div class="section-title">현재 경쟁전 맵 풀 (에피소드 9)</div>
+  <div class="ranked-maps-grid" id="ranked-maps-grid"></div>
+</div>
+
+<!-- ══════════════════════════════
+     4. 데일리 갤러리
+══════════════════════════════ -->
+<div class="page" id="page-daily">
+
+  <div class="daily-top">
+    <!-- 입력 폼 -->
+    <div class="daily-add-card">
+      <h3>📝 오늘 기록 추가</h3>
+      <div class="form-row">
+        <div class="form-label">날짜</div>
+        <input type="date" class="form-input" id="d-date">
+      </div>
+      <div class="form-row">
+        <div class="form-label">결과</div>
+        <div class="result-btns">
+          <button class="result-btn" id="btn-win" onclick="selResult('win')">🟢 승리</button>
+          <button class="result-btn" id="btn-lose" onclick="selResult('lose')">🔴 패배</button>
+          <button class="result-btn" id="btn-draw" onclick="selResult('draw')">⚪ 무승부</button>
+        </div>
+      </div>
+      <div class="form-row-inline" style="margin-bottom:10px;">
+        <div>
+          <div class="form-label">RR 변화</div>
+          <input type="number" class="form-input" id="d-rr" placeholder="+20 or -15">
+        </div>
+        <div>
+          <div class="form-label">현재 RR</div>
+          <input type="number" class="form-input" id="d-current-rr" placeholder="예: 45">
+        </div>
+      </div>
+      <div class="form-row" style="margin-bottom:14px;">
+        <div class="form-label">메모 (선택)</div>
+        <input type="text" class="form-input" id="d-note" placeholder="오늘 잘한 점, 못한 점...">
+      </div>
+      <button class="add-btn" onclick="addEntry()">기록 추가</button>
+    </div>
+
+    <!-- 요약 -->
+    <div class="daily-summary">
+      <div class="sum-item">
+        <div class="sum-label">총 게임</div>
+        <div class="sum-val" id="sum-total">0</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">승률</div>
+        <div class="sum-val" id="sum-wr" style="color:var(--green);">0%</div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">승 / 패</div>
+        <div class="sum-val"><span style="color:var(--green)" id="sum-wins">0</span> / <span style="color:var(--red)" id="sum-losses">0</span></div>
+      </div>
+      <div class="sum-item">
+        <div class="sum-label">총 RR 변화</div>
+        <div class="sum-val" id="sum-rr">+0</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RR 차트 -->
+  <div class="chart-wrap" id="chart-wrap" style="display:none;">
+    <div class="chart-title">RR 변화 추이</div>
+    <canvas id="rr-chart"></canvas>
+  </div>
+
+  <div class="section-title">기록 목록</div>
+  <div class="daily-list" id="daily-list">
+    <div class="empty-state">아직 기록이 없어요. 오늘 게임을 추가해보세요! 🎮</div>
+  </div>
+
+</div>
+
+<script>
+/* ════════════════════════════
+   데이터 — 각독·각폭
+════════════════════════════ */
+const LINEUP_DATA = {
+  '어센트': {
+    img: 'https://www.riotgames.com/darkroom/1440/5b4e8c3bcf0b14a4dd17addb66f5b4c0:6e5d43c8036c6879b5e08d3eb1e7d21a/map-ascent.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 원웨이 스모크', desc:'A 메인 앞 박스 위에서 스모크를 던지면 원웨이가 생겨요. 수비 시 A 메인 진입을 막기 용이합니다.', tip:'수비 필수'},
+          {title:'B 사이트 사독 각폭', desc:'B 라인 코너에서 사독을 B 사이트 뒤편에 정확히 올리면 들어오는 적을 견제할 수 있어요.', tip:'공격 시 사용'},
+          {title:'미드 마켓 독구름', desc:'미드 마켓 지붕 위로 독구름을 던져 적 이동을 차단하는 라인업입니다.', tip:'미드 장악'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 3스모크 각폭', desc:'각폭 위치 : 나무 옆 코너에 서서 미니맵 A 사이트 입구 3곳을 동시에 스모크로 막아요.', tip:'공격 기본기'},
+          {title:'B 사이트 인카 각폭', desc:'B 짧은 입구에서 인카 투척 후 B 사이트 안쪽 2곳 스모크로 시야 차단.', tip:'B 푸시 기본'},
+          {title:'미드 마켓 스팀 롤러', desc:'미드 커버하면서 마켓 상단까지 각폭으로 스모크 2개를 정확히 올려요.', tip:'미드 차단'},
+        ]
+      }
+    ]
+  },
+  '바인드': {
+    img: 'https://www.riotgames.com/darkroom/1440/04e5c0b49e1d6eb7fb130c29da87b0a4:5bfb3bc4e51764b2bc45ccc4f1de2aeb/map-bind.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 텔레 원웨이', desc:'A 텔레포터 앞에서 스모크를 올리면 원웨이가 형성됩니다. 텔레 사용 적을 확인 가능.', tip:'수비 핵심'},
+          {title:'B 사이트 시장 독폭탄', desc:'B 시장 코너에서 독폭탄을 B 사이트 뒷벽에 투척. 적 플랜트 시도를 방해해요.', tip:'스파이크 방어'},
+          {title:'A 연결로 독구름 차단', desc:'A 연결로 입구에 독구름 2개를 교차로 배치해 진입을 지연시킵니다.', tip:'시간 벌기'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 스탠다드 각폭', desc:'A 입구 박스 옆에서 스모크 2개를 사이트 내 핵심 위치에 정확히 투척하는 기본 각폭.', tip:'공격 기본'},
+          {title:'B 사이트 후방 스모크', desc:'B 텔레포터 뒤쪽을 스모크로 차단해 사이트 클리어를 쉽게 만들어요.', tip:'B 공략 필수'},
+          {title:'인카 + 스모크 콤보', desc:'인카로 시야를 없앤 뒤 즉시 스모크를 B 입구에 투척해 진입합니다.', tip:'콤보 플레이'},
+        ]
+      }
+    ]
+  },
+  '헤이븐': {
+    img: 'https://www.riotgames.com/darkroom/1440/ddedaf563f7090a2bb8e89ca2eb8e09e:3d70b8c18a83a6a4ede8e576d8caf199/map-haven.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'C 사이트 독벽 각폭', desc:'C 사이트 진입로를 독벽으로 분리해 적의 퇴로를 차단합니다. 위치: C 롱 코너.', tip:'C 장악'},
+          {title:'B 사이트 짧은 각독', desc:'B 사이트 짧은 입구 위로 사독을 정확히 투척해 원웨이 독 사독을 만듭니다.', tip:'원웨이'},
+          {title:'A 사이트 스모크+독폭', desc:'A 창고 코너에서 독폭탄+스모크 콤보로 A 사이트를 완전 장악합니다.', tip:'공격 필수'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'3사이트 분할 각폭', desc:'헤이븐은 사이트가 3개라 미니맵으로 각폭 연습이 필수. B에서 A와 C 동시 압박 가능.', tip:'전략적 가치 최고'},
+          {title:'C 긴 통로 스모크', desc:'C 롱 통로 2개 입구를 각폭으로 차단해 한 명이 C 홀드합니다.', tip:'수비 필수'},
+          {title:'미드 가라지 차단', desc:'미드 가라지 출구를 스모크로 막아 3사이트 분할을 완성시켜요.', tip:'미드 컨트롤'},
+        ]
+      }
+    ]
+  },
+  '스플릿': {
+    img: 'https://www.riotgames.com/darkroom/1440/d0807e131a84b2ce79e1b96be8a371eb:6d1e3cb4f76d1e3f99d1c7f5ea12abc0/map-split.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'B 사이트 독벽 분할', desc:'B 메인 진입 시 독벽으로 사이트를 반으로 나눠 수비 측의 시야를 완전 차단합니다.', tip:'B 장악 필수'},
+          {title:'미드 독구름 차단', desc:'스플릿 미드는 좁아 독구름 1개로도 효과적 차단이 가능해요.', tip:'미드 컨트롤'},
+          {title:'A 사이트 원웨이 사독', desc:'A 메인 코너에서 사독을 정확한 각도로 투척해 A 타워 원웨이를 만듭니다.', tip:'수비 원웨이'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 2+1 각폭', desc:'A 메인 2곳 + A 창고 1곳을 동시 스모크. 벽 코너에서 미니맵 보며 정확히 투척.', tip:'공격 기본'},
+          {title:'B 사이트 메인+창문 각폭', desc:'B 메인 입구와 창문 2곳을 각폭으로 처리해 B를 안전하게 진입합니다.', tip:'B 공략'},
+          {title:'인카 + B 메인 각폭', desc:'인카 투척 후 B 메인으로 스모크를 올려 적 시야를 0으로 만들어요.', tip:'콤보'},
+        ]
+      }
+    ]
+  },
+  '아이스박스': {
+    img: 'https://www.riotgames.com/darkroom/1440/de792967fd4f2e7ecdfd1f58d02f65d8:bc539ac893e54e35f4f6c4fdb34c1e42/map-icebox.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'B 사이트 초록 독벽', desc:'B 사이트 중앙을 독벽으로 완전히 분리합니다. 스플릿 킬 기회가 많아져요.', tip:'B 핵심'},
+          {title:'A 사이트 부스터 원웨이', desc:'A 부스터에서 사독을 투척해 A 사이트 뒤편에 원웨이를 생성합니다.', tip:'원웨이'},
+          {title:'미드 사독 견제', desc:'미드 입구에 사독을 투척해 미드 진입을 지연시킵니다.', tip:'미드 장악'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 각폭 표준', desc:'A 메인 + A 창고 입구 2곳을 각폭으로 스모크. 수직 구조 덕분에 위치 잡기가 특이해요.', tip:'A 표준'},
+          {title:'B 사이트 튜브 각폭', desc:'B 튜브 상단 출구와 B 노란 박스 뒤를 각폭으로 스모크 처리합니다.', tip:'B 공략'},
+          {title:'인카 + A 스크린 콤보', desc:'인카로 A 스크린을 소등시킨 후 A 사이트 내부를 스모크로 가려요.', tip:'A 콤보'},
+        ]
+      }
+    ]
+  },
+  '브리치': {
+    img: 'https://www.riotgames.com/darkroom/1440/9e0c4ead41571c3d5e5a4ffe7a0a56be:1f38df5ca1ace4ed0b4b37e1c0e5640e/map-breeze.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 독벽 필수', desc:'브리치 A는 워낙 넓어 독벽 없이는 클리어가 어렵습니다. 사이트 중앙을 독벽으로 분리.', tip:'A 필수'},
+          {title:'B 사이트 나무 원웨이', desc:'B 나무 뒤에서 사독을 B 사이트 뒷벽에 투척해 원웨이를 만듭니다.', tip:'B 원웨이'},
+          {title:'미드 우물 독구름', desc:'미드 우물 통로에 독구름을 투척해 미드 진입을 원천 차단합니다.', tip:'미드 차단'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 넓은 각폭', desc:'브리치 A는 넓어서 스모크 3개를 모두 사용해야 효과적입니다. 각폭 연습 필수.', tip:'스모크 3개'},
+          {title:'B 사이트 엘보우 각폭', desc:'B 엘보우 코너와 B 사이트 후방을 각폭으로 처리합니다.', tip:'B 공략'},
+          {title:'미드 피어 각폭', desc:'미드 피어 입구와 우물 입구를 각폭 스모크로 동시 차단.', tip:'미드 컨트롤'},
+        ]
+      }
+    ]
+  },
+  '프랙처': {
+    img: 'https://www.riotgames.com/darkroom/1440/640b3a6b4d0d6e3a50c4a5e1e9d8a2c7:abc123def456ghi789jkl012mno345pqr/map-fracture.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 로프 독벽', desc:'A 로프 지점에서 독벽을 투척해 A 사이트를 완전히 분리합니다.', tip:'A 필수'},
+          {title:'B 사이트 아치 원웨이', desc:'B 아치 아래에서 사독을 투척해 B 사이트 원웨이를 만듭니다.', tip:'B 원웨이'},
+          {title:'미드 어시저 차단', desc:'미드 어시저 지역에 독구름을 투척해 진입을 방해합니다.', tip:'미드 장악'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 분할 각폭', desc:'프랙처 특유의 H자 구조 덕분에 A를 여러 각도로 각폭 가능합니다.', tip:'A 공략'},
+          {title:'B 사이트 표준 각폭', desc:'B 트리와 B 사이트 입구 2개를 각폭 스모크로 처리합니다.', tip:'B 표준'},
+          {title:'로프 + 공격 각폭', desc:'로프를 타고 사이트 뒤편으로 진입하면서 스모크를 동시에 투척합니다.', tip:'기습 전략'},
+        ]
+      }
+    ]
+  },
+  '펄': {
+    img: 'https://www.riotgames.com/darkroom/1440/8b46f6d3c3e4a7f12d4b9e08c5a7f0e2:def789ghi012jkl345mno678pqr901stu/map-pearl.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 독벽 분할', desc:'A 사이트 진입로에서 독벽으로 시야를 차단합니다. 펄 A는 진입로가 좁아 효과적.', tip:'A 필수'},
+          {title:'B 사이트 물고기 원웨이', desc:'B 물고기 조각상 옆에서 사독을 B 사이트 후방에 투척해 원웨이를 생성합니다.', tip:'B 원웨이'},
+          {title:'미드 광장 독구름', desc:'미드 광장 입구에 독구름을 투척해 미드를 장악합니다.', tip:'미드 컨트롤'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 표준 3각폭', desc:'A 메인+A 링크+A 입구 3곳을 각폭 스모크로 차단합니다.', tip:'A 표준'},
+          {title:'B 사이트 지하 각폭', desc:'B 사이트 지하 구조물 뒤에 스모크를 각폭으로 투척해 클리어를 쉽게 만들어요.', tip:'B 공략'},
+          {title:'미드 인카 + 각폭 콤보', desc:'인카로 미드를 소등 후 양쪽 입구를 스모크로 차단합니다.', tip:'미드 장악'},
+        ]
+      }
+    ]
+  },
+  '로터스': {
+    img: 'https://www.riotgames.com/darkroom/1440/2fe8b4e2d9b3c4f6e5a8d7c9b0e1f3a5:ghi012jkl345mno678pqr901stu234vwx/map-lotus.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 꽃 독벽', desc:'A 사이트 입구 꽃 장식물 옆에서 독벽을 설치해 진입을 차단합니다.', tip:'A 차단'},
+          {title:'C 사이트 원웨이', desc:'C 입구 코너에서 사독으로 C 사이트 내부 원웨이를 만듭니다.', tip:'C 원웨이'},
+          {title:'미드 문 독구름', desc:'미드 문 통로에 독구름을 투척해 미드 진입을 차단합니다.', tip:'미드 장악'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 3각폭', desc:'헤이븐처럼 3사이트 맵이라 각폭이 중요합니다. A 메인 3곳을 정확히 각폭.', tip:'A 기본'},
+          {title:'B 사이트 좁은 각폭', desc:'B 사이트는 통로가 좁아 스모크 1~2개로도 효과적입니다.', tip:'B 효율'},
+          {title:'C 사이트 폭탄 각폭', desc:'C 폭탄 주변 2곳을 각폭으로 스모크해 플랜트를 쉽게 만들어요.', tip:'플랜트 보조'},
+        ]
+      }
+    ]
+  },
+  '선셋': {
+    img: 'https://www.riotgames.com/darkroom/1440/a3c7e9f1b5d8e4c6a2f0b8d6c4e2a0f8:jkl345mno678pqr901stu234vwx567yza/map-sunset.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 스카이라인 독벽', desc:'A 사이트 건물 위에서 독벽을 투척해 사이트 시야를 차단합니다.', tip:'A 필수'},
+          {title:'B 사이트 골목 원웨이', desc:'B 골목 좁은 통로에서 사독으로 B 사이트 원웨이를 생성합니다.', tip:'B 원웨이'},
+          {title:'미드 마켓 독구름', desc:'미드 마켓 구역에 독구름을 투척해 미드를 장악합니다.', tip:'미드 컨트롤'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 도심 각폭', desc:'A 사이트 도심 건물 입구 2곳을 각폭 스모크로 처리합니다.', tip:'A 공략'},
+          {title:'B 사이트 버스 각폭', desc:'B 버스 정류장 뒤와 B 입구를 각폭으로 스모크 차단합니다.', tip:'B 표준'},
+          {title:'미드 + 사이드 동시 각폭', desc:'인카 + 미드 스모크 + 사이드 스모크를 동시에 투척하는 고급 각폭입니다.', tip:'고급 전략'},
+        ]
+      }
+    ]
+  },
+  '어비스': {
+    img: 'https://www.riotgames.com/darkroom/1440/f1e3b5d7c9a2f4e6b8d0c2e4a6f8b0d2:mno678pqr901stu234vwx567yza890bcd/map-abyss.jpg',
+    agents: [
+      {
+        icon:'🐍', name:'바이퍼', color:'#4ade80',
+        lineups:[
+          {title:'A 사이트 심연 독벽', desc:'어비스 특유의 낭떠러지 구조를 활용한 독벽 배치. A 사이트 입구에 설치합니다.', tip:'A 차단'},
+          {title:'B 사이트 어둠 원웨이', desc:'B 사이트 어두운 코너에서 사독 원웨이를 만들어 적을 확인합니다.', tip:'B 원웨이'},
+          {title:'미드 브릿지 독구름', desc:'미드 브릿지 위에 독구름을 투척해 미드 이동을 차단합니다.', tip:'미드 장악'},
+        ]
+      },
+      {
+        icon:'🚬', name:'브림스톤', color:'#f59e0b',
+        lineups:[
+          {title:'A 사이트 각폭', desc:'어비스 A 사이트의 높낮이 차이를 이용한 각폭. 미니맵 확인 필수입니다.', tip:'A 공략'},
+          {title:'B 사이트 각폭', desc:'B 사이트 좁은 진입로 2곳을 각폭 스모크로 처리합니다.', tip:'B 표준'},
+          {title:'인카 + 낭떠러지 각폭', desc:'인카로 적의 낙하를 유도한 후 착지 지점을 스모크로 차단합니다.', tip:'독특한 전략'},
+        ]
+      }
+    ]
+  },
+};
+
+/* ════════════════════════════
+   데이터 — 추천 조합
+════════════════════════════ */
+const COMP_DATA = [
+  {
+    map:'어센트',
+    img:'https://www.riotgames.com/darkroom/800/5b4e8c3bcf0b14a4dd17addb66f5b4c0:6e5d43c8036c6879b5e08d3eb1e7d21a/map-ascent.jpg',
+    agents:[
+      {name:'제트',role:'duelist',icon:'🌪️'},
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'오멘',role:'controller',icon:'🌑'},
+      {name:'소바',role:'initiator',icon:'🏹'},
+      {name:'킬조이',role:'sentinel',icon:'🤖'},
+    ],
+    tip:'미드 장악이 핵심. 소바 드론으로 정보를 얻고 킬조이로 사이트를 지켜요.'
+  },
+  {
+    map:'바인드',
+    img:'https://www.riotgames.com/darkroom/800/04e5c0b49e1d6eb7fb130c29da87b0a4:5bfb3bc4e51764b2bc45ccc4f1de2aeb/map-bind.jpg',
+    agents:[
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'요루',role:'duelist',icon:'🗡️'},
+      {name:'바이퍼',role:'controller',icon:'🐍'},
+      {name:'스카이',role:'initiator',icon:'🦅'},
+      {name:'사이퍼',role:'sentinel',icon:'🎩'},
+    ],
+    tip:'텔레포터를 활용한 기습 플레이가 강력. 요루 텔레 + 바이퍼 스모크 콤보.'
+  },
+  {
+    map:'헤이븐',
+    img:'https://www.riotgames.com/darkroom/800/ddedaf563f7090a2bb8e89ca2eb8e09e:3d70b8c18a83a6a4ede8e576d8caf199/map-haven.jpg',
+    agents:[
+      {name:'제트',role:'duelist',icon:'🌪️'},
+      {name:'피닉스',role:'duelist',icon:'🔥'},
+      {name:'브림스톤',role:'controller',icon:'🚬'},
+      {name:'페이드',role:'initiator',icon:'🌙'},
+      {name:'킬조이',role:'sentinel',icon:'🤖'},
+    ],
+    tip:'3사이트 맵이라 브림스톤 각폭이 필수. 킬조이로 C 사이트를 혼자 지킬 수 있어요.'
+  },
+  {
+    map:'스플릿',
+    img:'https://www.riotgames.com/darkroom/800/d0807e131a84b2ce79e1b96be8a371eb:6d1e3cb4f76d1e3f99d1c7f5ea12abc0/map-split.jpg',
+    agents:[
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'네온',role:'duelist',icon:'⚡'},
+      {name:'바이퍼',role:'controller',icon:'🐍'},
+      {name:'카이/오',role:'initiator',icon:'🤝'},
+      {name:'세이지',role:'sentinel',icon:'💚'},
+    ],
+    tip:'좁은 구조라 네온 속도 돌파가 강력. 바이퍼 독벽으로 B 미드를 완전 장악.'
+  },
+  {
+    map:'아이스박스',
+    img:'https://www.riotgames.com/darkroom/800/de792967fd4f2e7ecdfd1f58d02f65d8:bc539ac893e54e35f4f6c4fdb34c1e42/map-icebox.jpg',
+    agents:[
+      {name:'제트',role:'duelist',icon:'🌪️'},
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'바이퍼',role:'controller',icon:'🐍'},
+      {name:'소바',role:'initiator',icon:'🏹'},
+      {name:'사이퍼',role:'sentinel',icon:'🎩'},
+    ],
+    tip:'수직 구조가 많아 제트 업드래프트가 필수. 소바 정찰로 높은 곳을 먼저 클리어.'
+  },
+  {
+    map:'브리치',
+    img:'https://www.riotgames.com/darkroom/800/9e0c4ead41571c3d5e5a4ffe7a0a56be:1f38df5ca1ace4ed0b4b37e1c0e5640e/map-breeze.jpg',
+    agents:[
+      {name:'제트',role:'duelist',icon:'🌪️'},
+      {name:'네온',role:'duelist',icon:'⚡'},
+      {name:'바이퍼',role:'controller',icon:'🐍'},
+      {name:'소바',role:'initiator',icon:'🏹'},
+      {name:'킬조이',role:'sentinel',icon:'🤖'},
+    ],
+    tip:'넓은 맵이라 바이퍼가 필수. 소바 드론+바이퍼 독벽 콤보로 사이트를 나눠요.'
+  },
+  {
+    map:'펄',
+    img:'https://www.riotgames.com/darkroom/800/8b46f6d3c3e4a7f12d4b9e08c5a7f0e2:def789ghi012jkl345mno678pqr901stu/map-pearl.jpg',
+    agents:[
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'요루',role:'duelist',icon:'🗡️'},
+      {name:'아스트라',role:'controller',icon:'⭐'},
+      {name:'페이드',role:'initiator',icon:'🌙'},
+      {name:'세이지',role:'sentinel',icon:'💚'},
+    ],
+    tip:'지하 구조물이 많아 페이드 하운트로 아래를 먼저 확인. 아스트라 글로브로 미드 장악.'
+  },
+  {
+    map:'로터스',
+    img:'https://www.riotgames.com/darkroom/800/2fe8b4e2d9b3c4f6e5a8d7c9b0e1f3a5:ghi012jkl345mno678pqr901stu234vwx/map-lotus.jpg',
+    agents:[
+      {name:'제트',role:'duelist',icon:'🌪️'},
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'오멘',role:'controller',icon:'🌑'},
+      {name:'카이/오',role:'initiator',icon:'🤝'},
+      {name:'킬조이',role:'sentinel',icon:'🤖'},
+    ],
+    tip:'3사이트 맵. 오멘 블링크 + 카이/오 플래시 콤보로 사이트 진입. 킬조이가 1사이트 홀드.'
+  },
+  {
+    map:'선셋',
+    img:'https://www.riotgames.com/darkroom/800/a3c7e9f1b5d8e4c6a2f0b8d6c4e2a0f8:jkl345mno678pqr901stu234vwx567yza/map-sunset.jpg',
+    agents:[
+      {name:'네온',role:'duelist',icon:'⚡'},
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'브림스톤',role:'controller',icon:'🚬'},
+      {name:'스카이',role:'initiator',icon:'🦅'},
+      {name:'사이퍼',role:'sentinel',icon:'🎩'},
+    ],
+    tip:'도심 구조라 사이퍼 트립와이어가 강력. 브림스톤 인카로 미드 컨트롤이 핵심.'
+  },
+  {
+    map:'어비스',
+    img:'https://www.riotgames.com/darkroom/800/f1e3b5d7c9a2f4e6b8d0c2e4a6f8b0d2:mno678pqr901stu234vwx567yza890bcd/map-abyss.jpg',
+    agents:[
+      {name:'제트',role:'duelist',icon:'🌪️'},
+      {name:'피닉스',role:'duelist',icon:'🔥'},
+      {name:'바이퍼',role:'controller',icon:'🐍'},
+      {name:'게코',role:'initiator',icon:'🦎'},
+      {name:'킬조이',role:'sentinel',icon:'🤖'},
+    ],
+    tip:'낭떠러지가 많아 제트 업드래프트+대시 이동이 매우 강력. 게코 트레일블레이저로 낮은 곳 확인.'
+  },
+  {
+    map:'프랙처',
+    img:'https://www.riotgames.com/darkroom/800/640b3a6b4d0d6e3a50c4a5e1e9d8a2c7:abc123def456ghi789jkl012mno345pqr/map-fracture.jpg',
+    agents:[
+      {name:'레이나',role:'duelist',icon:'👁️'},
+      {name:'체임버',role:'sentinel',icon:'🎯'},
+      {name:'바이퍼',role:'controller',icon:'🐍'},
+      {name:'브리치',role:'initiator',icon:'⚡'},
+      {name:'킬조이',role:'sentinel',icon:'🤖'},
+    ],
+    tip:'H자 구조라 로프 타기가 핵심. 체임버 앵커로 로프 입구를 지키고 바이퍼 독벽으로 분할.'
+  },
+];
+
+/* ════════════════════════════
+   데이터 — 경쟁전 맵
+════════════════════════════ */
+const RANKED_MAPS = [
+  {name:'어센트',location:'이탈리아 베네치아',img:'https://www.riotgames.com/darkroom/800/5b4e8c3bcf0b14a4dd17addb66f5b4c0:6e5d43c8036c6879b5e08d3eb1e7d21a/map-ascent.jpg',desc:'열린 미드와 2사이트 구조. 미드 장악이 승패를 가르는 핵심 맵.',tags:['미드 중요','2사이트','균형형']},
+  {name:'바인드',location:'모로코',img:'https://www.riotgames.com/darkroom/800/04e5c0b49e1d6eb7fb130c29da87b0a4:5bfb3bc4e51764b2bc45ccc4f1de2aeb/map-bind.jpg',desc:'텔레포터가 있는 독특한 맵. 텔레 사용 타이밍이 매우 중요합니다.',tags:['텔레포터','2사이트','기습형']},
+  {name:'헤이븐',location:'부탄',img:'https://www.riotgames.com/darkroom/800/ddedaf563f7090a2bb8e89ca2eb8e09e:3d70b8c18a83a6a4ede8e576d8caf199/map-haven.jpg',desc:'유일한 3사이트 맵. 수비 측이 불리하지만 미드 장악 시 유리해져요.',tags:['3사이트','미드 핵심','수비 어려움']},
+  {name:'스플릿',location:'일본 도쿄',img:'https://www.riotgames.com/darkroom/800/d0807e131a84b2ce79e1b96be8a371eb:6d1e3cb4f76d1e3f99d1c7f5ea12abc0/map-split.jpg',desc:'좁고 수직적인 구조. 로프와 하이그라운드 장악이 핵심입니다.',tags:['2사이트','수직구조','타워형']},
+  {name:'아이스박스',location:'러시아',img:'https://www.riotgames.com/darkroom/800/de792967fd4f2e7ecdfd1f58d02f65d8:bc539ac893e54e35f4f6c4fdb34c1e42/map-icebox.jpg',desc:'복잡한 수직 구조의 맵. 하이그라운드와 각도 관리가 매우 중요해요.',tags:['2사이트','수직형','복잡구조']},
+  {name:'브리치',location:'버뮤다',img:'https://www.riotgames.com/darkroom/800/9e0c4ead41571c3d5e5a4ffe7a0a56be:1f38df5ca1ace4ed0b4b37e1c0e5640e/map-breeze.jpg',desc:'가장 넓은 맵. 장거리 교전이 많고 스나이퍼가 강한 맵입니다.',tags:['2사이트','넓은구조','스나이퍼']},
+  {name:'펄',location:'포르투갈 수중',img:'https://www.riotgames.com/darkroom/800/8b46f6d3c3e4a7f12d4b9e08c5a7f0e2:def789ghi012jkl345mno678pqr901stu/map-pearl.jpg',desc:'수중 도시 맵. 미드 아트 코너 장악이 매우 중요합니다.',tags:['2사이트','미드 중요','지하형']},
+  {name:'로터스',location:'인도',img:'https://www.riotgames.com/darkroom/800/2fe8b4e2d9b3c4f6e5a8d7c9b0e1f3a5:ghi012jkl345mno678pqr901stu234vwx/map-lotus.jpg',desc:'3사이트 맵으로 헤이븐과 유사. 문으로 사이트 간 이동이 가능합니다.',tags:['3사이트','문 메커닉','연결형']},
+  {name:'선셋',location:'멕시코',img:'https://www.riotgames.com/darkroom/800/a3c7e9f1b5d8e4c6a2f0b8d6c4e2a0f8:jkl345mno678pqr901stu234vwx567yza/map-sunset.jpg',desc:'도심 배경의 맵. 미드 마켓 컨트롤이 매우 중요합니다.',tags:['2사이트','미드 중요','도심형']},
+  {name:'어비스',location:'미지의 공간',img:'https://www.riotgames.com/darkroom/800/f1e3b5d7c9a2f4e6b8d0c2e4a6f8b0d2:mno678pqr901stu234vwx567yza890bcd/map-abyss.jpg',desc:'낭떠러지가 있는 독특한 맵. 떨어지면 즉사. 이동 경로 관리가 핵심.',tags:['2사이트','낭떠러지','독특구조']},
+];
+
+/* ════════════════════════════
+   탭 전환
+════════════════════════════ */
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+/* ════════════════════════════
+   각독·각폭 렌더링
+════════════════════════════ */
+let currentLineupMap = '어센트';
+
+function renderLineupChips() {
+  const row = document.getElementById('lineup-map-chips');
+  row.innerHTML = Object.keys(LINEUP_DATA).map(m =>
+    `<button class="map-chip${m===currentLineupMap?' active':''}" onclick="selectLineupMap('${m}')">${m}</button>`
+  ).join('');
+}
+
+function selectLineupMap(map) {
+  currentLineupMap = map;
+  renderLineupChips();
+  renderLineupContent();
+}
+
+function renderLineupContent() {
+  const data = LINEUP_DATA[currentLineupMap];
+  const wrap = document.getElementById('lineup-content');
+
+  const imgHtml = `
+    <div class="map-img-wrap" style="border-radius:6px;margin-bottom:20px;height:160px;">
+      <img src="${data.img}" alt="${currentLineupMap}" onerror="this.style.display='none'">
+      <div class="map-name-overlay">${currentLineupMap}</div>
+    </div>`;
+
+  const cardsHtml = `<div class="lineup-grid">` +
+    data.agents.map(a => `
+      <div class="lineup-card">
+        <div class="lineup-card-header">
+          <div class="agent-icon">${a.icon}</div>
+          <div>
+            <h3 style="color:${a.color}">${a.name}</h3>
+            <span>각독 · 각폭 포인트</span>
+          </div>
+        </div>
+        <div class="lineup-body">
+          ${a.lineups.map(l => `
+            <div class="lineup-item">
+              <div class="lineup-item-title">${l.title}</div>
+              <div class="lineup-item-desc">${l.desc}</div>
+              <span class="lineup-item-tip">${l.tip}</span>
+            </div>`).join('')}
+        </div>
+      </div>`).join('') +
+  `</div>`;
+
+  wrap.innerHTML = imgHtml + cardsHtml;
+}
+
+/* ════════════════════════════
+   추천 조합 렌더링
+════════════════════════════ */
+function renderComp() {
+  const grid = document.getElementById('comp-grid');
+  grid.innerHTML = COMP_DATA.map(c => `
+    <div class="comp-card">
+      <div class="comp-map-header">
+        <img src="${c.img}" alt="${c.map}" onerror="this.style.background='var(--bg3)';this.style.display='none'">
+        <div class="comp-map-name">${c.map}</div>
+      </div>
+      <div class="comp-body">
+        <div class="comp-agents">
+          ${c.agents.map(a => `
+            <div class="agent-badge">
+              ${a.icon} ${a.name}
+              <span class="role-tag ${a.role}">${a.role}</span>
+            </div>`).join('')}
+        </div>
+        <div class="comp-tip">${c.tip}</div>
+      </div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════
+   경쟁전 맵 렌더링
+════════════════════════════ */
+function renderRanked() {
+  const grid = document.getElementById('ranked-maps-grid');
+  grid.innerHTML = RANKED_MAPS.map(m => `
+    <div class="ranked-map-card">
+      <div class="ranked-map-img">
+        <img src="${m.img}" alt="${m.name}" onerror="this.style.display='none'">
+        <div class="rmap-name">${m.name}</div>
+        <div class="rmap-location">${m.location}</div>
+      </div>
+      <div class="ranked-map-body">
+        <div class="rmap-desc">${m.desc}</div>
+        <div class="rmap-tags">
+          ${m.tags.map(t=>`<span class="rmap-tag">${t}</span>`).join('')}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+/* ════════════════════════════
+   데일리 갤러리
+════════════════════════════ */
+let entries = [];
+let selectedResult = '';
+
+try { entries = JSON.parse(localStorage.getItem('vt_daily') || '[]'); } catch(e) { entries = []; }
+
+function saveEntries() {
+  try { localStorage.setItem('vt_daily', JSON.stringify(entries)); } catch(e) {}
+}
+
+function selResult(r) {
+  selectedResult = r;
+  ['win','lose','draw'].forEach(x => {
+    document.getElementById('btn-' + x).className = 'result-btn' + (r===x?' sel-'+r:'');
+  });
+}
+
+function addEntry() {
+  const date = document.getElementById('d-date').value;
+  const rr = parseInt(document.getElementById('d-rr').value) || 0;
+  const currentRr = parseInt(document.getElementById('d-current-rr').value) || null;
+  const note = document.getElementById('d-note').value.trim();
+
+  if (!date) { alert('날짜를 선택해주세요!'); return; }
+  if (!selectedResult) { alert('결과를 선택해주세요!'); return; }
+
+  entries.unshift({ date, result: selectedResult, rr, currentRr, note, id: Date.now() });
+  saveEntries();
+
+  // 초기화
+  document.getElementById('d-rr').value = '';
+  document.getElementById('d-current-rr').value = '';
+  document.getElementById('d-note').value = '';
+  selectedResult = '';
+  ['win','lose','draw'].forEach(x => document.getElementById('btn-' + x).className = 'result-btn');
+
+  renderDaily();
+}
+
+function deleteEntry(id) {
+  entries = entries.filter(e => e.id !== id);
+  saveEntries();
+  renderDaily();
+}
+
+function renderDaily() {
+  // 요약
+  const wins = entries.filter(e => e.result === 'win').length;
+  const losses = entries.filter(e => e.result === 'lose').length;
+  const total = entries.length;
+  const wr = total > 0 ? ((wins/total)*100).toFixed(0) : 0;
+  const totalRR = entries.reduce((s,e) => s + (e.rr||0), 0);
+
+  document.getElementById('sum-total').textContent = total;
+  document.getElementById('sum-wr').textContent = wr + '%';
+  document.getElementById('sum-wins').textContent = wins;
+  document.getElementById('sum-losses').textContent = losses;
+  const rrEl = document.getElementById('sum-rr');
+  rrEl.textContent = (totalRR >= 0 ? '+' : '') + totalRR;
+  rrEl.style.color = totalRR >= 0 ? 'var(--green)' : 'var(--red)';
+
+  // 차트
+  const chartWrap = document.getElementById('chart-wrap');
+  if (entries.length > 1) {
+    chartWrap.style.display = 'block';
+    drawChart();
+  } else {
+    chartWrap.style.display = 'none';
+  }
+
+  // 목록
+  const list = document.getElementById('daily-list');
+  if (entries.length === 0) {
+    list.innerHTML = '<div class="empty-state">아직 기록이 없어요. 오늘 게임을 추가해보세요! 🎮</div>';
+    return;
+  }
+
+  list.innerHTML = entries.map(e => {
+    const resKor = e.result==='win'?'승리':e.result==='lose'?'패배':'무승부';
+    const rrStr = e.rr >= 0 ? '+'+e.rr : e.rr;
+    const rrClass = e.rr >= 0 ? 'up' : 'down';
+    const dateObj = new Date(e.date);
+    const dateStr = (dateObj.getMonth()+1) + '월 ' + dateObj.getDate() + '일';
+    return `
+      <div class="daily-entry">
+        <div class="entry-bar ${e.result}"></div>
+        <div>
+          <div class="entry-result ${e.result}">${resKor}</div>
+          <div class="entry-date">${dateStr}</div>
+        </div>
+        <div class="entry-rr ${rrClass}">${rrStr} RR</div>
+        <div class="entry-note">${e.note || '—'}</div>
+        <button class="entry-del" onclick="deleteEntry(${e.id})">✕</button>
+      </div>`;
+  }).join('');
+}
+
+function drawChart() {
+  const canvas = document.getElementById('rr-chart');
+  const ctx = canvas.getContext('2d');
+  canvas.width = canvas.offsetWidth || 800;
+  canvas.height = 120;
+
+  const sorted = [...entries].reverse();
+  let cum = 0;
+  const points = sorted.map(e => { cum += (e.rr||0); return cum; });
+
+  const min = Math.min(...points, 0);
+  const max = Math.max(...points, 1);
+  const range = max - min || 1;
+  const W = canvas.width, H = 100;
+  const pad = 10;
+
+  ctx.clearRect(0, 0, W, canvas.height);
+
+  // 선
+  ctx.beginPath();
+  ctx.strokeStyle = '#ff4655';
+  ctx.lineWidth = 2;
+  points.forEach((p, i) => {
+    const x = pad + (i / (points.length-1||1)) * (W - pad*2);
+    const y = pad + (1 - (p - min) / range) * (H - pad*2);
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+
+  // 점
+  points.forEach((p, i) => {
+    const x = pad + (i / (points.length-1||1)) * (W - pad*2);
+    const y = pad + (1 - (p - min) / range) * (H - pad*2);
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI*2);
+    ctx.fillStyle = p >= 0 ? '#4ade80' : '#ff4655';
+    ctx.fill();
+  });
+}
+
+// 날짜 기본값 오늘
+document.getElementById('d-date').valueAsDate = new Date();
+
+// 초기 렌더링
+renderLineupChips();
+renderLineupContent();
+renderComp();
+renderRanked();
+renderDaily();
+</script>
+</body>
+</html>
